@@ -10,7 +10,7 @@ This document explains **where** each required HCI principle and usability law i
 
 | Principle | Where it appears | Implementation |
 |---|---|---|
-| **Visibility** | Header on every page | The two primary actions (Report lost, Report found) and navigation are always visible. On small screens they are the first two items in the menu. `src/components/layout/site-header.tsx`, `mobile-nav.tsx` |
+| **Visibility** | Header on every page | A deliberately minimal header: two links (Browse, How it works), a language icon, one primary **Report item** action (which opens Lost / Found) and the account. Lower-priority links live in the account menu and footer. On small screens, Report lost and Report found are the first two items in the menu, and the home page shows both as large buttons. `src/components/layout/site-header.tsx`, `report-menu.tsx`, `mobile-nav.tsx` |
 | | Current location | Active navigation links use `aria-current="page"` and a highlighted style. `nav-link.tsx` |
 | | Listing state | Every listing shows a labelled Lost/Found badge and a status badge (Open, Claim in progress, Reunited, Closed). `src/components/items/badges.tsx` |
 | | Active filters | Selected filters appear as removable chips above results. `src/app/browse/page.tsx` |
@@ -82,6 +82,7 @@ This document explains **where** each required HCI principle and usability law i
 ## 6. Hick-Hyman Law
 
 - Two clear first choices on the home page: **Lost** or **Found**.
+- The header shows only five controls. Lost and Found are grouped under one "Report item" menu, so people scan fewer options on every page.
 - Browse shows only the two most-used filters (type and category) by default. Location, date and status sit behind **"More filters"** (opened automatically if any is active).
 - Sensible defaults: today's date, "Private messages on Homeward" contact method, "Active" status, "Newest first" sort, and "Best match" when searching.
 - The chat offers 4 suggested questions instead of a blank box.

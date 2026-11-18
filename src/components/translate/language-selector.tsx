@@ -21,6 +21,7 @@ declare global {
 
 const CONTAINER_ID = "google_translate_element";
 const SELECT_ID = "site-language";
+const PANEL_ID = "language-panel";
 
 /** Common languages for a diverse campus; Google's widget lists them by name. */
 const INCLUDED_LANGUAGES = "ar,bn,de,es,fa,fr,hi,id,it,ja,ko,ms,pa,pt,ru,sw,tr,ur,vi,zh-CN";
@@ -35,6 +36,31 @@ export function LanguageSelector() {
   const [state, setState] = useState<"loading" | "ready" | "unavailable">("loading");
   const translated = usePageTranslated();
   const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+
+  // Close on outside click or Esc; Esc returns focus to the trigger.
+  useEffect(() => {
+    if (!open) return;
+    document.getElementById(SELECT_ID)?.focus();
+    const onPointer = (e: PointerEvent) => {
+      if (!wrapperRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
 
   useEffect(() => {
     window.googleTranslateElementInit = () => {
@@ -93,45 +119,58 @@ export function LanguageSelector() {
   }
 
   return (
-    <div className="notranslate flex items-center gap-2" translate="no">
-      <label
-        htmlFor={SELECT_ID}
-        className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground"
+    <div ref={wrapperRef} className="notranslate relative" translate="no">
+      {/* Compact trigger keeps the header uncluttered; the panel holds the real widget. */}
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls={PANEL_ID}
+        aria-label={translated ? "Language (page is translated)" : "Language"}
+        title="Translate this page"
+        className="relative inline-flex size-10 items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground"
       >
-        <Languages className="size-4" aria-hidden />
-        <span className="hidden lg:inline">Language</span>
-        <span className="sr-only lg:hidden">Language</span>
-      </label>
-      <div className="relative w-[8.5rem] sm:w-40">
+        <Languages className="size-5" aria-hidden />
+        {translated && (
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-background" aria-hidden />
+        )}
+      </button>
+
+      {/* Always mounted (hidden when closed) so Google's widget isn't destroyed. */}
+      <div
+        id={PANEL_ID}
+        hidden={!open}
+        className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border bg-popover p-4 text-popover-foreground shadow-lg"
+      >
+        <label htmlFor={SELECT_ID} className="mb-2 block text-sm font-semibold">
+          Translate this page
+        </label>
         <div
           id={CONTAINER_ID}
           ref={containerRef}
           className="[&_.goog-te-gadget]:leading-tight [&_.goog-te-gadget>span]:hidden [&_.goog-te-gadget]:text-[0px]!"
         />
         {state === "loading" && (
-          <div
-            className="h-10 animate-pulse rounded-xl border bg-muted"
-            role="status"
-            aria-label="Loading language options"
-          />
+          <div className="h-10 animate-pulse rounded-xl border bg-muted" role="status" aria-label="Loading language options" />
         )}
         {state === "unavailable" && (
-          <p className="text-xs leading-tight text-muted-foreground" role="status">
+          <p className="text-sm text-muted-foreground" role="status">
             Translation unavailable right now
           </p>
         )}
+        <p className="mt-2 text-xs text-muted-foreground">Powered by Google Translate. Machine translations may be inaccurate.</p>
+        {translated && (
+          <button
+            type="button"
+            onClick={showOriginal}
+            className="mt-3 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-xl border text-sm font-medium text-primary hover:bg-accent"
+          >
+            <RotateCcw className="size-4" aria-hidden />
+            Show original (English)
+          </button>
+        )}
       </div>
-      {translated && (
-        <button
-          type="button"
-          onClick={showOriginal}
-          className="inline-flex h-10 items-center gap-1 rounded-xl px-2 text-sm font-medium text-primary hover:bg-accent"
-        >
-          <RotateCcw className="size-4" aria-hidden />
-          <span className="hidden sm:inline">Show original</span>
-          <span className="sr-only sm:hidden">Show original English page</span>
-        </button>
-      )}
       <Script
         id="google-translate"
         src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"

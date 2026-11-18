@@ -34,10 +34,14 @@ test.describe("Small screens", () => {
 
   test("language selector is labelled, keyboard reachable and does not cover content", async ({ page }) => {
     await go(page, "/");
-    const label = page.locator('label[for="site-language"]');
-    await expect(label).toBeAttached();
-    // The official Google widget needs network access; accept either the
-    // loaded native select or the clear "unavailable" message.
+    // Compact icon in the header opens a panel holding the official widget.
+    const trigger = page.getByRole("button", { name: /^Language/ });
+    await expect(trigger).toBeVisible();
+    await trigger.focus();
+    await page.keyboard.press("Enter");
+    await expect(trigger).toHaveAttribute("aria-expanded", "true");
+    await expect(page.locator('label[for="site-language"]')).toHaveText("Translate this page");
+    // The Google widget needs network access; accept the loaded select or the clear fallback.
     const select = page.locator("#site-language");
     const unavailable = page.getByText("Translation unavailable right now");
     await expect(select.or(unavailable)).toBeVisible({ timeout: 15_000 });
@@ -45,9 +49,10 @@ test.describe("Small screens", () => {
       await expect(select).toHaveAttribute("aria-label", "Translate this page");
       await select.focus();
       await expect(select).toBeFocused();
-      const box = await select.boundingBox();
-      expect(box!.y + box!.height).toBeLessThanOrEqual(64); // stays inside the header
     }
+    await page.keyboard.press("Escape");
+    await expect(trigger).toHaveAttribute("aria-expanded", "false");
+    await expect(trigger).toBeFocused();
     // The chat launcher stays clear of the hero actions.
     const launcher = await page.getByRole("button", { name: "Need help?" }).boundingBox();
     const lost = await page.getByRole("link", { name: /Report Lost Item/ }).boundingBox();
