@@ -1,12 +1,13 @@
 import { config } from "dotenv";
 config({ path: [".env.local", ".env"], quiet: true });
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { hashPassword } from "better-auth/crypto";
 import { sql } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "../src/db/schema";
 import { processUpload } from "../src/lib/image-processing";
+import { deleteObject, getStorageMode, putObject } from "../src/lib/storage-core";
 import { DEMO_ITEMS, DEMO_USERS, CATEGORIES } from "./seed-data";
 
 /**
@@ -25,8 +26,6 @@ type SeedDb = PgDatabase<PgQueryResultHKT, typeof schema>;
  * resized and re-encoded to WebP, which drops EXIF metadata.
  */
 const SEED_IMAGE_DIR = path.resolve("scripts/seed-images");
-/** Mirrors src/lib/storage.ts, which is server-only and cannot be imported here. */
-const UPLOAD_ROOT = path.resolve(process.env.UPLOAD_DIR ?? ".data/uploads");
 
 async function attachDemoPhoto(
   db: SeedDb,
@@ -45,9 +44,8 @@ async function attachDemoPhoto(
   const id = crypto.randomUUID();
   const storageKey = `${id}.webp`;
   const thumbKey = `${id}-thumb.webp`;
-  mkdirSync(UPLOAD_ROOT, { recursive: true });
-  writeFileSync(path.join(UPLOAD_ROOT, storageKey), processed.full);
-  writeFileSync(path.join(UPLOAD_ROOT, thumbKey), processed.thumb);
+  await putObject(storageKey, processed.full);
+  await putObject(thumbKey, processed.thumb);
   await db.insert(schema.itemImage).values({
     id,
     itemReportId: input.itemReportId,
@@ -102,6 +100,14 @@ async function main() {
       return;
     }
 
+    // Seeding a hosted database while photos go to this machine's disk would
+    // leave the deployed site with image rows whose files it cannot read.
+    if (process.env.DATABASE_URL && getStorageMode() === "local" && !args.has("--local-photos")) {
+      throw new Error(
+        "DATABASE_URL points at a hosted database but BLOB_READ_WRITE_TOKEN is not set, so demo photos would only be saved on this computer. Add the Vercel Blob token to .env.local (or pass --local-photos if this database is only used locally).",
+      );
+    }
+
     const existing = await db.select({ id: schema.user.id }).from(schema.user).limit(1);
     if (existing.length > 0 && !args.has("--reset")) {
       console.log("Users already exist; skipping demo data (pass --reset to replace it).");
@@ -113,14 +119,9 @@ async function main() {
       const stored = await db
         .select({ storageKey: schema.itemImage.storageKey, thumbKey: schema.itemImage.thumbKey })
         .from(schema.itemImage);
-      for (const { storageKey, thumbKey } of stored) {
-        for (const key of [storageKey, thumbKey]) {
-          // Same guard as src/lib/storage.ts.
-          if (/^[a-f0-9-]{36}(-thumb)?\.webp$/.test(key)) {
-            rmSync(path.join(UPLOAD_ROOT, key), { force: true });
-          }
-        }
-      }
+      await Promise.all(
+        stored.flatMap(({ storageKey, thumbKey }) => [deleteObject(storageKey), deleteObject(thumbKey)]),
+      );
       await db.execute(
         sql`TRUNCATE "activity_event", "moderation_record", "listing_flag", "claim_message", "claim_request", "item_image", "item_report", "session", "account", "verification", "user" CASCADE`,
       );
@@ -188,7 +189,7 @@ async function main() {
         photoCount += 1;
       }
     }
-    console.log(`✓ ${DEMO_ITEMS.length} demo listings (${photoCount} with photos)`);
+    console.log(`✓ ${DEMO_ITEMS.length} demo listings (${photoCount} with photos, stored in ${getStorageMode() === "blob" ? "Vercel Blob" : "local uploads folder"})`);
 
     // One realistic claim conversation so dashboards are not empty.
     const walletIndex = DEMO_ITEMS.findIndex((i) => i.title.startsWith("Brown leather wallet"));

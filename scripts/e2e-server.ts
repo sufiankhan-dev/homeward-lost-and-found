@@ -12,6 +12,8 @@ rmSync(root, { recursive: true, force: true });
 const env = {
   ...process.env,
   DATABASE_URL: "",
+  // Keep test uploads on local disk, never in a real Blob store.
+  BLOB_READ_WRITE_TOKEN: "",
   PGLITE_DIR: path.join(root, "pglite"),
   UPLOAD_DIR: path.join(root, "uploads"),
   DISABLE_RATE_LIMIT: "1",

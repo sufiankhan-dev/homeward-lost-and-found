@@ -81,6 +81,7 @@ Copy `.env.example` to `.env.local` (`npm run setup` does this for you).
 | `DATABASE_URL` | production | Neon connection string. Empty means local PGlite |
 | `ADMIN_EMAILS` | no | Comma-separated emails that get the moderator role on sign-up |
 | `ANTHROPIC_API_KEY` | no | Enables the AI chatbot (server only). Without it, the FAQ engine answers |
+| `BLOB_READ_WRITE_TOKEN` | serverless hosting | Vercel Blob token for item photos. Empty means local disk (`UPLOAD_DIR`) |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | no | Support email shown on the Contact page |
 | `PGLITE_DIR`, `UPLOAD_DIR` | no | Override local storage folders |
 
@@ -88,6 +89,15 @@ Copy `.env.example` to `.env.local` (`npm run setup` does this for you).
 
 1. Create a Neon project and copy the pooled connection string into `DATABASE_URL`.
 2. Run `npm run db:migrate`, then `node --import tsx scripts/seed.ts --categories-only` (or `npm run db:seed` for demo data).
+
+### Deploying to Vercel
+
+Serverless functions have a read-only filesystem that isn't shared between instances, so neither the local PGlite database nor the local uploads folder works there.
+
+1. Set `DATABASE_URL` (Neon), `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` (the deployed URL) in the Vercel project's environment variables.
+2. In the Vercel dashboard, open **Storage → Create → Blob**, choose **Private** access, and connect it to the project. This adds `BLOB_READ_WRITE_TOKEN`. Photos stay private and are served only through the access-checked `/api/images` route.
+3. Copy `BLOB_READ_WRITE_TOKEN` into your local `.env.local` too, then run `npm run db:migrate` and `npm run db:seed` so demo photos are uploaded to the Blob store. The seed refuses to put photos on local disk while `DATABASE_URL` points at a hosted database.
+4. Redeploy.
 
 ## Architecture
 
@@ -143,6 +153,6 @@ Foreign keys use cascading or `set null` deletes as appropriate. Indexes cover b
 ## Known limitations
 
 - **Google Translate:** the official Website Translator widget is a legacy Google product. It requires network access to `translate.google.com`. When unavailable, the selector shows "Translation unavailable right now" instead of a broken control.
-- **Image storage** uses local disk (`.data/uploads`). For serverless hosting, implement the three functions in `src/lib/storage.ts` against an object store (S3, R2, Vercel Blob).
+- **Image storage** supports Vercel Blob and local disk (`src/lib/storage-core.ts`). Another object store (S3, R2) means implementing the same three functions.
 - **Email notifications** aren't sent; updates appear in the dashboard activity feed.
 - Unattached uploads (photos uploaded but never submitted) are kept until cleaned up; a scheduled cleanup job would remove them.

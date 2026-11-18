@@ -23,6 +23,7 @@
     "@electric-sql/pglite": "^0.5.16",
     "@hookform/resolvers": "^7.0.7",
     "@neondatabase/serverless": "^1.2.1",
+    "@vercel/blob": "^2.9.0",
     "better-auth": "^1.7.25",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.2",
