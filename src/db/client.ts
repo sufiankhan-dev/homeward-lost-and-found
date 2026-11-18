@@ -35,6 +35,14 @@ export function createDatabase(): Database {
     // Driver-specific result HKTs differ; the query API used by the app is identical.
     return drizzleNeon({ client: pool, schema }) as unknown as Database;
   }
+  // Serverless hosts have a read-only, per-instance filesystem, so the
+  // embedded fallback cannot work there. Fail with an actionable message
+  // instead of an opaque "ENOENT mkdir /var/task/.data/pglite".
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    throw new Error(
+      "DATABASE_URL is not set. Serverless deployments need a Neon PostgreSQL connection string; the embedded PGlite database only works locally.",
+    );
+  }
   const client = new PGlite(getPgliteDir());
   return drizzlePglite({ client, schema }) as unknown as Database;
 }
