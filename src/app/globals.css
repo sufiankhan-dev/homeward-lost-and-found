@@ -1,26 +1,145 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
+/*
+ * Homeward design tokens.
+ * One primary colour (deep teal) on warm neutral backgrounds.
+ * Lost and Found each have a dedicated token pair; they are always paired with
+ * a text label and an icon so meaning never depends on colour alone.
+ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-lost: var(--lost);
+  --color-lost-soft: var(--lost-soft);
+  --color-found: var(--found);
+  --color-found-soft: var(--found-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: oklch(0.985 0.006 80);
+  --foreground: oklch(0.24 0.02 60);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.02 60);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.02 60);
+  --primary: oklch(0.44 0.075 190);
+  --primary-foreground: oklch(0.985 0.01 190);
+  --secondary: oklch(0.955 0.012 80);
+  --secondary-foreground: oklch(0.3 0.02 60);
+  --muted: oklch(0.955 0.012 80);
+  --muted-foreground: oklch(0.47 0.02 60);
+  --accent: oklch(0.94 0.025 190);
+  --accent-foreground: oklch(0.3 0.06 190);
+  --destructive: oklch(0.52 0.19 27);
+  --border: oklch(0.9 0.012 75);
+  --input: oklch(0.86 0.014 75);
+  --ring: oklch(0.55 0.09 190);
+  --lost: oklch(0.5 0.14 45);
+  --lost-soft: oklch(0.95 0.035 60);
+  --found: oklch(0.47 0.13 255);
+  --found-soft: oklch(0.95 0.025 250);
+  --success: oklch(0.45 0.11 150);
+  --success-soft: oklch(0.95 0.04 150);
+  --warning: oklch(0.5 0.11 75);
+  --warning-soft: oklch(0.96 0.05 90);
+  --radius: 0.75rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  /* Visible, consistent keyboard focus everywhere (Norman: visibility). */
+  :focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading tracking-tight text-balance;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
+/* Google Website Translator: keep the injected banner from shifting layout. */
 body {
-  background: var(--background);
+  top: 0 !important;
+}
+.skiptranslate iframe,
+iframe.skiptranslate,
+#goog-gt-tt {
+  display: none !important;
+}
+/* Keep Google's required attribution visible but quiet. */
+.goog-te-gadget {
+  font-family: inherit !important;
+  font-size: 0.75rem !important;
+  color: var(--muted-foreground) !important;
+}
+.goog-te-gadget .goog-te-combo {
+  display: block;
+  margin: 0 0 0.375rem 0 !important;
+  height: 2.5rem;
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--input);
+  background: var(--card);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  padding: 0 0.75rem;
+  font-size: 0.875rem;
+  font-family: inherit;
 }
