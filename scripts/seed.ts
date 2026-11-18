@@ -1,10 +1,12 @@
 import { config } from "dotenv";
 config({ path: [".env.local", ".env"], quiet: true });
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { hashPassword } from "better-auth/crypto";
 import { sql } from "drizzle-orm";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "../src/db/schema";
+import { processUpload } from "../src/lib/image-processing";
 import { DEMO_ITEMS, DEMO_USERS, CATEGORIES } from "./seed-data";
 
 /**
@@ -16,6 +18,49 @@ import { DEMO_ITEMS, DEMO_USERS, CATEGORIES } from "./seed-data";
 const args = new Set(process.argv.slice(2));
 
 type SeedDb = PgDatabase<PgQueryResultHKT, typeof schema>;
+
+/**
+ * Demo photos ship with the repository in scripts/seed-images. They are given
+ * exactly the same treatment as a real upload: type checked by signature,
+ * resized and re-encoded to WebP, which drops EXIF metadata.
+ */
+const SEED_IMAGE_DIR = path.resolve("scripts/seed-images");
+/** Mirrors src/lib/storage.ts, which is server-only and cannot be imported here. */
+const UPLOAD_ROOT = path.resolve(process.env.UPLOAD_DIR ?? ".data/uploads");
+
+async function attachDemoPhoto(
+  db: SeedDb,
+  input: { itemReportId: string; uploaderId: string; altText: string; image: string },
+): Promise<void> {
+  const file = path.join(SEED_IMAGE_DIR, `${input.image}.jpg`);
+  let bytes: Buffer;
+  try {
+    bytes = readFileSync(file);
+  } catch {
+    throw new Error(
+      `Missing demo photo ${path.relative(process.cwd(), file)}. Run: npx tsx scripts/fetch-seed-images.ts`,
+    );
+  }
+  const processed = await processUpload(bytes);
+  const id = crypto.randomUUID();
+  const storageKey = `${id}.webp`;
+  const thumbKey = `${id}-thumb.webp`;
+  mkdirSync(UPLOAD_ROOT, { recursive: true });
+  writeFileSync(path.join(UPLOAD_ROOT, storageKey), processed.full);
+  writeFileSync(path.join(UPLOAD_ROOT, thumbKey), processed.thumb);
+  await db.insert(schema.itemImage).values({
+    id,
+    itemReportId: input.itemReportId,
+    uploaderId: input.uploaderId,
+    storageKey,
+    thumbKey,
+    mimeType: "image/webp",
+    width: processed.width,
+    height: processed.height,
+    sizeBytes: processed.full.byteLength,
+    altText: input.altText,
+  });
+}
 
 async function getDb(): Promise<{ db: SeedDb; close: () => Promise<void> }> {
   if (process.env.DATABASE_URL) {
@@ -63,6 +108,19 @@ async function main() {
       return;
     }
     if (args.has("--reset")) {
+      // Remove the files behind the rows we are about to drop, so repeated
+      // resets do not leave unreachable photos in the upload folder.
+      const stored = await db
+        .select({ storageKey: schema.itemImage.storageKey, thumbKey: schema.itemImage.thumbKey })
+        .from(schema.itemImage);
+      for (const { storageKey, thumbKey } of stored) {
+        for (const key of [storageKey, thumbKey]) {
+          // Same guard as src/lib/storage.ts.
+          if (/^[a-f0-9-]{36}(-thumb)?\.webp$/.test(key)) {
+            rmSync(path.join(UPLOAD_ROOT, key), { force: true });
+          }
+        }
+      }
       await db.execute(
         sql`TRUNCATE "activity_event", "moderation_record", "listing_flag", "claim_message", "claim_request", "item_image", "item_report", "session", "account", "verification", "user" CASCADE`,
       );
@@ -95,6 +153,7 @@ async function main() {
     console.log(`✓ ${DEMO_USERS.length} demo users`);
 
     const itemIds: string[] = [];
+    let photoCount = 0;
     for (const item of DEMO_ITEMS) {
       const created = daysAgo(item.daysAgo);
       const [row] = await db
@@ -119,8 +178,17 @@ async function main() {
         })
         .returning({ id: schema.itemReport.id });
       itemIds.push(row.id);
+      if (item.image) {
+        await attachDemoPhoto(db, {
+          itemReportId: row.id,
+          uploaderId: item.userId,
+          altText: item.title,
+          image: item.image,
+        });
+        photoCount += 1;
+      }
     }
-    console.log(`✓ ${DEMO_ITEMS.length} demo listings`);
+    console.log(`✓ ${DEMO_ITEMS.length} demo listings (${photoCount} with photos)`);
 
     // One realistic claim conversation so dashboards are not empty.
     const walletIndex = DEMO_ITEMS.findIndex((i) => i.title.startsWith("Brown leather wallet"));

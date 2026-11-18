@@ -49,6 +49,8 @@ type DemoItem = {
   userId: (typeof DEMO_USERS)[number]["id"];
   reportType: ReportType;
   title: string;
+  /** Optional demo photo file in scripts/seed-images (without .jpg). */
+  image?: string;
   description: string;
   category: (typeof CATEGORIES)[number]["slug"];
   location: string;
@@ -65,6 +67,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Brown leather wallet",
+    image: "brown-leather-wallet",
     description:
       "Found on a table by the café inside the library entrance. It has a few cards inside. I've kept it safe and will return it to the owner after a quick check.",
     category: "wallets",
@@ -77,6 +80,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Black iPhone 14 in clear case",
+    image: "black-iphone",
     description:
       "Lost my phone either on the bus from North Gate or walking to the Science Building. The lock screen is a mountain photo.",
     category: "phones",
@@ -88,6 +92,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Set of keys with red lanyard",
+    image: "keys-red-lanyard",
     description:
       "Three keys on a ring with a red university lanyard. Found on the grass outside the Sports Centre after the evening football session.",
     category: "keys",
@@ -100,6 +105,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Grey Dell laptop in black sleeve",
+    image: "grey-laptop",
     description:
       "Left my laptop in Lecture Hall B after the 2pm statistics lecture. Very important — it has my dissertation drafts on it.",
     category: "electronics",
@@ -111,6 +117,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Blue Hydro Flask water bottle",
+    image: "blue-water-bottle",
     description:
       "Found a blue insulated water bottle left on a bench in the Student Union food court.",
     category: "bottles",
@@ -123,6 +130,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Green North Face backpack",
+    image: "green-backpack",
     description:
       "Dark green backpack with a laptop compartment. I think I left it in the Main Cafeteria around lunchtime.",
     category: "bags",
@@ -146,6 +154,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Silver wristwatch",
+    image: "silver-wristwatch",
     description:
       "Lost a silver analogue watch, probably in the changing rooms at the Sports Centre. It has sentimental value — a gift from my grandfather.",
     category: "jewellery",
@@ -157,6 +166,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Black prescription glasses",
+    image: "black-glasses",
     description:
       "Found a pair of black-framed glasses in a soft case on the second floor of the Arts Building.",
     category: "glasses",
@@ -169,6 +179,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Organic Chemistry textbook",
+    image: "chemistry-textbook",
     description:
       "Lost my Organic Chemistry textbook (7th edition) with lots of handwritten notes in the margins. Probably in the Science Building.",
     category: "books",
@@ -180,6 +191,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Grey hoodie",
+    image: "grey-hoodie",
     description:
       "Grey university hoodie left on a chair in Lecture Hall A after the morning lecture.",
     category: "clothing",
@@ -192,6 +204,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "AirPods Pro charging case",
+    image: "airpods-case",
     description:
       "White AirPods Pro case (with earbuds) lost somewhere between the Halls of Residence and the Engineering Block.",
     category: "electronics",
@@ -203,6 +216,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Samsung Galaxy phone",
+    image: "samsung-phone",
     description:
       "Found a Samsung phone on the floor of the East car park, near the pay machine. Battery is dead.",
     category: "phones",
@@ -214,6 +228,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Car key with Toyota fob",
+    image: "car-key",
     description:
       "Lost my car key with a Toyota fob and a small torch attached. Last used it in the East car park.",
     category: "keys",
@@ -225,6 +240,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Gold hoop earring",
+    image: "gold-earring",
     description:
       "Found a single small gold hoop earring in the women's bathroom at the Medical Centre.",
     category: "jewellery",
@@ -236,6 +252,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Red umbrella",
+    image: "red-umbrella",
     description:
       "Left a red folding umbrella at the Bus Stop by North Gate during the rain on Monday morning.",
     category: "other",
@@ -247,6 +264,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Pencil case with calculator",
+    image: "pencil-case",
     description:
       "Purple pencil case containing pens, a ruler and a scientific calculator. Found in the Main Library quiet zone.",
     category: "books",
@@ -259,6 +277,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Black puffer jacket",
+    image: "black-puffer-jacket",
     description:
       "Lost a black puffer jacket in the Student Union after the society fair. Has my bus pass in the inside pocket.",
     category: "clothing",
@@ -282,6 +301,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "Tan leather handbag",
+    image: "tan-handbag",
     description:
       "Tan leather shoulder bag lost at the Halls of Residence common room. Contains a notebook and make-up bag.",
     category: "bags",
@@ -293,6 +313,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-sam",
     reportType: "FOUND",
     title: "Lunchbox with blue lid",
+    image: "lunchbox",
     description:
       "A clear lunchbox with a blue lid left in the Engineering Block kitchen fridge for over a week.",
     category: "bottles",
@@ -304,6 +325,7 @@ export const DEMO_ITEMS: DemoItem[] = [
     userId: "demo-user-alex",
     reportType: "LOST",
     title: "USB-C charger and cable",
+    image: "laptop-charger",
     description:
       "White 65W USB-C laptop charger with braided cable, left plugged in at a desk in the Computer Lab.",
     category: "electronics",

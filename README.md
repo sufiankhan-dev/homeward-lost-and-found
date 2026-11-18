@@ -54,6 +54,8 @@ npm run dev       # http://localhost:3000
 
 Password for all demo accounts: `homeward-demo-1`. Demo data lives in `scripts/seed-data.ts`. It isn't loaded when `NODE_ENV=production` unless you pass `--allow-production`.
 
+Demo listings include photos in `scripts/seed-images/`. Running the seed copies them into the upload folder through the same validation, resize and metadata-stripping pipeline as a real upload, so the cards and detail pages show real thumbnails. The photos are public-domain (CC0 / Public Domain Mark) files from [Openverse](https://openverse.org); credits are in `scripts/seed-images/CREDITS.md`. The student ID and bank card listings deliberately have no photo, because finders are told not to photograph cards. `npx tsx scripts/fetch-seed-images.ts` re-downloads the set, and `--review` renders a contact sheet of search results when you want to pick a different photo.
+
 ### Useful scripts
 
 | Command | Purpose |
@@ -64,6 +66,7 @@ Password for all demo accounts: `homeward-demo-1`. Demo data lives in `scripts/s
 | `npm run build && npm run test:e2e` | End-to-end tests (Playwright; isolated database in `.data-test`) |
 | `npm run db:generate` | Generate a migration after editing `src/db/schema.ts` |
 | `npm run db:migrate` / `db:seed` / `db:reset` | Apply migrations / add demo data / replace demo data |
+| `npx tsx scripts/fetch-seed-images.ts` | Re-download the public-domain demo photos (`--review` shows candidates) |
 
 First-time Playwright setup: `npx playwright install chromium`.
 
@@ -105,7 +108,7 @@ src/
     validation.ts         Zod schemas shared by client and server
     session.ts            getCurrentUser / requireUser / requireAdmin
 drizzle/                  SQL migrations
-scripts/                  migrate, seed, setup-env, e2e server
+scripts/                  migrate, seed, setup-env, e2e server; seed-images holds demo photos
 tests/unit, tests/e2e     Vitest and Playwright
 docs/HCI.md               HCI principles → implementation map
 ```
